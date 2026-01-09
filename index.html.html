@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>哎：哎哎哎哎哎</title>
+    <style>
+        body {
+            margin: 0;
+            background-color: #000;
+            color: #00f2ff;
+            font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        #container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            perspective: 1200px;
+        }
+
+        .symbol {
+            position: absolute;
+            user-select: none;
+            will-change: transform, opacity;
+            text-shadow: 0 0 10px rgba(0, 242, 255, 0.7);
+        }
+
+        /* 初始/中间的主文字 */
+        #main-symbol {
+            font-size: 120px;
+            z-index: 100;
+            opacity: 1;
+        }
+
+        /* 旋转的分身粒子 */
+        .clone {
+            font-size: 50px;
+            z-index: 50;
+        }
+
+        /* 最后哎字的样式 */
+        .ai-style {
+            color: #ff0055;
+            text-shadow: 0 0 20px #ff0055, 0 0 40px #ff0055;
+            font-weight: 900;
+        }
+
+        /* 炸裂碎片的通用样式 */
+        .fragment {
+            pointer-events: none;
+            z-index: 150;
+        }
+    </style>
+</head>
+<body>
+
+<div id="container">
+    <div id="main-symbol" class="symbol">】</div>
+</div>
+
+<script>
+    const container = document.getElementById('container');
+    const mainSymbol = document.getElementById('main-symbol');
+    let clones = [];
+    const cloneCount = 60; // 分身数量
+
+    // --- 启动流程 ---
+    setTimeout(stage1_Clone, 1500);
+
+    // 【第一阶段：影分身弹出】
+    function stage1_Clone() {
+        for (let i = 0; i < cloneCount; i++) {
+            setTimeout(() => {
+                const c = document.createElement('div');
+                c.className = 'symbol clone';
+                c.innerText = '】';
+                container.appendChild(c);
+
+                const angle = (i / cloneCount) * Math.PI * 2;
+                const dist = 180 + Math.random() * 70;
+                
+                // 初始从中心弹出
+                c.style.transform = 'translate(0, 0) scale(0) rotate(0deg)';
+                c.style.opacity = '0';
+                
+                requestAnimationFrame(() => {
+                    c.style.transition = 'all 0.8s cubic-bezier(0.16, 1, 0.3, 1)';
+                    c.style.opacity = '0.8';
+                    const tx = Math.cos(angle) * dist;
+                    const ty = Math.sin(angle) * dist;
+                    c.style.transform = `translate(${tx}px, ${ty}px) scale(1) rotate(${angle}rad)`;
+                });
+
+                clones.push({ el: c, angle: angle, dist: dist, rotation: 0 });
+
+                if (i === cloneCount - 1) setTimeout(stage2_Swirl, 1000);
+            }, i * 30);
+        }
+    }
+
+    // 【第二阶段：螺旋旋转】
+    function stage2_Swirl() {
+        let rotationStep = 0;
+        const swirlTimer = setInterval(() => {
+            rotationStep += 0.03;
+            clones.forEach((c, i) => {
+                const currentAngle = c.angle + rotationStep;
+                const dynamicDist = c.dist + Math.sin(rotationStep * 2 + i) * 20;
+                c.el.style.transition = 'none'; // 实时运动不需要过渡
+                c.el.style.transform = `translate(${Math.cos(currentAngle) * dynamicDist}px, ${Math.sin(currentAngle) * dynamicDist}px) rotate(${currentAngle + Math.PI/2}rad)`;
+            });
+        }, 16);
+
+        setTimeout(() => {
+            clearInterval(swirlTimer);
+            stage3_Gather();
+        }, 3500);
+    }
+
+    // 【第三阶段：凝聚幻化】
+    function stage3_Gather() {
+        // 主体变色准备
+        mainSymbol.style.transition = 'opacity 0.5s';
+        mainSymbol.style.opacity = '0';
+
+        clones.forEach((c) => {
+            c.el.style.transition = 'all 0.8s cubic-bezier(0.7, 0, 0.3, 1)';
+            c.el.style.transform = 'translate(0, 0) scale(0) rotate(720deg)';
+            c.el.style.opacity = '0';
+        });
+
+        setTimeout(() => {
+            // 清理旧分身
+            clones.forEach(c => c.el.remove());
+            clones = [];
+
+            // 展现“哎”
+            mainSymbol.innerText = '哎';
+            mainSymbol.classList.add('ai-style');
+            mainSymbol.style.fontSize = '180px';
+            mainSymbol.style.opacity = '1';
+            
+            stage4_ShakeAndBlast();
+        }, 900);
+    }
+
+    // 【第四阶段：震动蓄力与满屏炸裂】
+    function stage4_ShakeAndBlast() {
+        let startTime = Date.now();
+        const duration = 1500; // 震动1.5秒
+
+        function shake() {
+            const elapsed = Date.now() - startTime;
+            const progress = elapsed / duration;
+            
+            // 震动幅度随时间增加
+            const amplitude = progress * 20;
+            const x = (Math.random() - 0.5) * amplitude;
+            const y = (Math.random() - 0.5) * amplitude;
+            const s = 1 + progress * 0.5; // 逐渐变大
+            
+            mainSymbol.style.transform = `translate(${x}px, ${y}px) scale(${s})`;
+
+            if (elapsed < duration) {
+                requestAnimationFrame(shake);
+            } else {
+                finalBigBang();
+            }
+        }
+        requestAnimationFrame(shake);
+    }
+
+    // 【终极阶段：大爆炸】
+    function finalBigBang() {
+        // 1. 主体消失
+        mainSymbol.style.opacity = '0';
+        mainSymbol.style.transform = 'scale(10)';
+
+        // 2. 屏幕闪光
+        document.body.style.backgroundColor = '#ff0055';
+        setTimeout(() => {
+            document.body.style.transition = 'background-color 1.5s ease';
+            document.body.style.backgroundColor = '#000';
+        }, 50);
+
+        // 3. 产生大量爆炸粒子
+        const blastCount = 300; 
+        const screenRadius = Math.max(window.innerWidth, window.innerHeight);
+
+        for (let i = 0; i < blastCount; i++) {
+            const p = document.createElement('div');
+            p.className = 'symbol ai-style fragment';
+            p.innerText = '哎';
+            
+            // 随机大小
+            const size = Math.random() * 50 + 10;
+            p.style.fontSize = size + 'px';
+            container.appendChild(p);
+
+            // 初始在正中心
+            p.style.transform = 'translate(0, 0) scale(1)';
+            p.style.opacity = '1';
+
+            // 随机炸裂目标
+            const angle = Math.random() * Math.PI * 2;
+            const dist = (0.2 + Math.random() * 0.8) * screenRadius; // 飞往屏幕各处
+            const tx = Math.cos(angle) * dist;
+            const ty = Math.sin(angle) * dist;
+            const rot = Math.random() * 720 - 360;
+
+            // 动画执行
+            requestAnimationFrame(() => {
+                const duration = 0.5 + Math.random() * 1.5; // 飞出的时间长短不一
+                p.style.transition = `all ${duration}s cubic-bezier(0.1, 0.8, 0.2, 1)`;
+                
+                p.style.transform = `translate(${tx}px, ${ty}px) rotate(${rot}deg) scale(${Math.random() * 2})`;
+                
+                // 慢慢淡出
+                setTimeout(() => {
+                    p.style.opacity = '0';
+                }, duration * 600);
+            });
+
+            // 彻底移除
+            setTimeout(() => p.remove(), 3000);
+        }
+    }
+</script>
+
+</body>
+</html>
